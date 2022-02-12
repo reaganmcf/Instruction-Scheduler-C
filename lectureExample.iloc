@@ -1,0 +1,19 @@
+loadI 1024 => r0
+loadI 2 => r10
+loadI 3 => r11
+loadI 4 => r12
+loadI 5 => r13
+storeAI r10 => r0, 4   
+storeAI r11 => r0, 8   
+storeAI r12 => r0, 12  
+storeAI r13 => r0, 16  
+loadAI r0, 4  => r1   
+add    r1, r1 => r1    
+loadAI r0, 8  => r2    
+mult r1, r2  => r1     
+loadAI r0, 12 => r3    
+mult r1, r3  => r1     
+loadAI r0, 16 => r2    
+mult r1, r2  => r1     
+storeAI r1 => r0, 4    
+outputAI r0, 4
