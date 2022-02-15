@@ -10,7 +10,20 @@
 #ifndef INSTR_H
 #define INSTR_H
 
-typedef enum {LOADI, LOADAI, LOADAO, STOREAI, STOREAO, ADD, SUB, MUL, DIV, LSHIFTI, RSHIFTI, OUTPUTAI} OpCode;
+typedef enum {
+	LOADI, 
+	LOADAI,
+       	LOADAO,
+       	STOREAI,
+       	STOREAO,
+       	ADD,
+       	SUB,
+       	MUL,
+       	DIV,
+       	LSHIFTI,
+       	RSHIFTI,
+       	OUTPUTAI
+} OpCode;
 
 typedef struct InstructionInfo Instruction;
 

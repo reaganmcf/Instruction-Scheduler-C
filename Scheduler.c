@@ -16,6 +16,7 @@
 #include "Instr.h"
 #include "InstrUtils.h"
 #include "Utils.h"
+#include "DepGraph.h"
 
 
 int main(int argc, char *argv[])
@@ -46,8 +47,10 @@ int main(int argc, char *argv[])
 	  ERROR(" INVALID HEURISTIC: Use of command:\n  schedule -a/b/c < ILOC file\n");
 	  exit(EXIT_FAILURE);
 	}
+	
+	DepGraphNode* root = BuildDepGraph(InstrList);
 
-        PrintInstructionList(stdout, InstrList);
+        //PrintInstructionList(stdout, InstrList);
 
 	fprintf(stderr,"\n-----------------DONE---------------------------\n");
 	
