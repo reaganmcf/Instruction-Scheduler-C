@@ -13,6 +13,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
+#include "DepGraphUtils.h"
 #include "Instr.h"
 #include "InstrUtils.h"
 #include "Utils.h"
@@ -48,9 +49,10 @@ int main(int argc, char *argv[])
 	  exit(EXIT_FAILURE);
 	}
 	
-	DepGraphNode* root = BuildDepGraph(InstrList);
+	DepGraphNode* root = BuildDepGraph(LastInstruction(InstrList));
+  PrintDepGraphNode(root, 0);
 
-        //PrintInstructionList(stdout, InstrList);
+  //PrintInstructionList(stdout, InstrList);
 
 	fprintf(stderr,"\n-----------------DONE---------------------------\n");
 	

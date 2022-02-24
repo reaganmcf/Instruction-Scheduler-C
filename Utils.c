@@ -22,5 +22,6 @@ int err(const char *level, const char *func, int line, const char *fmt, ...)
 	vsprintf(s, fmt, va);
 	va_end(va);
 	r = fprintf(stderr, "[%s:%s:%d] %s", level, func, line, s);
+  fprintf(stderr, "\n");
 	return r;
 }
