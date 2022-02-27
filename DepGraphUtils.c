@@ -32,7 +32,7 @@ void PrintDepGraphNode(DepGraphNode *node, unsigned int level) {
   while (edge != NULL) {
     for (int j = 0; j < level + 1; j++)
       printf("   ");
-    printf("->(TRUE):");
+    printf("->(%s):", edge->type == TRUE ? "TRUE" : "ANTI");
     PrintInstruction(stdout, edge->from->instruction);
     PrintDepGraphNode(edge->from, level + 2);
 

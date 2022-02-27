@@ -62,16 +62,16 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
   OpCode op = instruction->opcode;
   /** ADD, MUL, SUB **/
   if (op == ADD || op == MUL || op == SUB) {
-    Instruction *dep1 = GetRegisterDeps(instruction, instruction->field1);
-    Instruction *dep2 = GetRegisterDeps(instruction, instruction->field2);
+    Instruction *dep1 = GetRegisterDep(instruction, instruction->field1);
+    Instruction *dep2 = GetRegisterDep(instruction, instruction->field2);
 
     if (dep1 == NULL || dep2 == NULL) {
       ERROR("ADD,SUB,MUL cannot have null register deps!");
       exit(1);
     }
 
-    DepGraphEdge *edge1 = CreateEdge(0, BuildDepGraphNode(dep1));
-    DepGraphEdge *edge2 = CreateEdge(0, BuildDepGraphNode(dep2));
+    DepGraphEdge *edge1 = CreateEdge(0, BuildDepGraphNode(dep1), TRUE);
+    DepGraphEdge *edge2 = CreateEdge(0, BuildDepGraphNode(dep2), TRUE);
 
     if (dep1->id == dep2->id) {
       // same dep only gets added once not twice
@@ -87,14 +87,15 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
 
     /** OUTPUTAI **/
   } else if (op == OUTPUTAI) {
-    Instruction *dep = GetMemoryDeps(instruction, instruction->field2);
+    Instruction *dep = GetMemoryDep(instruction, instruction->field2);
     DepGraphEdge *storeDeps = GetStoreDeps(0, instruction);
-    if (dep == NULL) return storeDeps;
-    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep)), storeDeps);
+    if (dep == NULL)
+      return storeDeps;
+    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep), TRUE), storeDeps);
 
     /** STOREAI **/
   } else if (op == STOREAI) {
-    Instruction *dep = GetRegisterDeps(instruction, instruction->field1);
+    Instruction *dep = GetRegisterDep(instruction, instruction->field1);
     DepGraphEdge *storeDeps = GetStoreDeps(0, instruction);
     DepGraphEdge *loadDeps = GetLoadDeps(0, instruction);
 
@@ -105,31 +106,32 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
       exit(1);
     }
 
-    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep)), loadAndStoreDeps);
+    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep), TRUE),
+                        loadAndStoreDeps);
 
     /** LOADAI **/
   } else if (op == LOADAI) {
-    Instruction *dep = GetMemoryDeps(instruction, instruction->field2);
+    Instruction *dep = GetMemoryDep(instruction, instruction->field2);
+    Instruction *antiDep = GetRegisterAntiDep(instruction, instruction->field3);
     DepGraphEdge *storeDeps = GetStoreDeps(0, instruction);
 
     if (dep == NULL) {
-      // LOADAI can have optionally null deps
-      // For example:
-      //  loadI 1024 => r0
-      //  loadAI r0, 4 => r1
-      //
-      // Here, r0, 4 has no dep (since loadI 1024 => r0 is the dep for all
-      // instructions)
-      return storeDeps;
+      if (antiDep == NULL)
+        return storeDeps;
+      return CombineDeps(CreateEdge(0, BuildDepGraphNode(antiDep), ANTI),
+                         storeDeps);
     }
 
-    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep)), storeDeps);
+    DepGraphEdge *trueAndAntiDeps =
+        CombineDeps(CreateEdge(0, BuildDepGraphNode(dep), TRUE),
+                    CreateEdge(0, BuildDepGraphNode(antiDep), ANTI));
+    edges = CombineDeps(trueAndAntiDeps, storeDeps);
 
     /** STORE **/
   } else if (op == STORE) {
     // Store depends on field1
     // as well as all previous memory operations (besides loadI)
-    Instruction *dep = GetRegisterDeps(instruction, instruction->field1);
+    Instruction *dep = GetRegisterDep(instruction, instruction->field1);
     DepGraphEdge *loadDeps = GetLoadDeps(0, instruction);
     DepGraphEdge *storeDeps = GetStoreDeps(0, instruction);
 
@@ -140,11 +142,12 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
       exit(1);
     }
 
-    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep)), loadAndStoreDeps);
+    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep), TRUE),
+                        loadAndStoreDeps);
 
     /** LOAD  **/
   } else if (op == LOAD) {
-    Instruction *dep = GetRegisterDeps(instruction, instruction->field1);
+    Instruction *dep = GetRegisterDep(instruction, instruction->field1);
     DepGraphEdge *storeDeps = GetStoreDeps(0, instruction);
 
     if (dep == NULL) {
@@ -152,7 +155,7 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
       exit(1);
     }
 
-    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep)), storeDeps);
+    edges = CombineDeps(CreateEdge(0, BuildDepGraphNode(dep), TRUE), storeDeps);
   } else {
     ERROR("opcode %d not yet implemented", op);
     exit(1);
@@ -161,8 +164,8 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
   return edges;
 }
 
-Instruction *GetRegisterDeps(Instruction *instruction,
-                             unsigned int register_num) {
+Instruction *GetRegisterDep(Instruction *instruction,
+                            unsigned int register_num) {
   Instruction *dep = NULL;
   if (instruction == NULL) {
     ERROR("instruction param cannot be NULL");
@@ -172,9 +175,8 @@ Instruction *GetRegisterDeps(Instruction *instruction,
   // TODO: anti deps
 
   Instruction *curr = instruction->prev;
-  DEBUG("Finding dep register for %d", register_num);
-  PrintInstruction(stdout, curr);
   while (curr != NULL && dep == NULL) {
+    /** LOADI **/
     if (curr->opcode == LOADI) {
       if (curr->field2 == register_num)
         dep = curr;
@@ -199,8 +201,45 @@ Instruction *GetRegisterDeps(Instruction *instruction,
   return dep;
 }
 
-Instruction *GetMemoryDeps(Instruction *instruction,
-                           unsigned int memory_location) {
+Instruction *GetRegisterAntiDep(Instruction *instruction,
+                                unsigned int register_num) {
+  Instruction *dep = NULL;
+  if (instruction == NULL) {
+    ERROR("instruction param cannot be NULL");
+    exit(1);
+  }
+
+  Instruction *curr = instruction->prev;
+  while (curr != NULL && dep == NULL) {
+    /** LOADI **/
+    if (curr->opcode == LOADI) {
+      // Can't be an ANTI dep -- SKIP!
+
+      /** ADD, MUL, SUB, DIV **/
+    } else if (curr->opcode == ADD || curr->opcode == MUL ||
+               curr->opcode == SUB || curr->opcode == DIV) {
+      if (curr->field1 == register_num || curr->field2 == register_num)
+        dep = curr;
+
+      /** LOADAI **/
+    } else if (curr->opcode == LOADAI || curr->opcode == OUTPUTAI ||
+               curr->opcode == STOREAI || curr->opcode == LOAD ||
+               curr->opcode == STORE) {
+      if (curr->field1 == register_num)
+        dep = curr;
+    } else {
+      ERROR("opcode %d not yet implemented", curr->opcode);
+      exit(1);
+    }
+
+    curr = curr->prev;
+  }
+
+  return dep;
+}
+
+Instruction *GetMemoryDep(Instruction *instruction,
+                          unsigned int memory_location) {
   Instruction *dep = NULL;
   if (instruction == NULL) {
     ERROR("instruction param cannot be NULL");
@@ -247,7 +286,7 @@ DepGraphEdge *GetStoreDeps(unsigned int weight, Instruction *instruction) {
   DepGraphEdge *head = edges;
   while (curr != NULL) {
     if (curr->opcode == STORE) {
-      DepGraphEdge *newEdge = CreateEdge(0, BuildDepGraphNode(curr));
+      DepGraphEdge *newEdge = CreateEdge(0, BuildDepGraphNode(curr), TRUE);
       head = newEdge;
       if (edges == NULL) {
         edges = head;
@@ -273,7 +312,7 @@ DepGraphEdge *GetLoadDeps(unsigned int weight, Instruction *instruction) {
   DepGraphEdge *head = edges;
   while (curr != NULL) {
     if (curr->opcode == LOAD) {
-      DepGraphEdge *newEdge = CreateEdge(0, BuildDepGraphNode(curr));
+      DepGraphEdge *newEdge = CreateEdge(0, BuildDepGraphNode(curr), TRUE);
       head = newEdge;
       if (edges == NULL) {
         edges = head;
@@ -286,7 +325,8 @@ DepGraphEdge *GetLoadDeps(unsigned int weight, Instruction *instruction) {
   return edges;
 }
 
-DepGraphEdge *CreateEdge(unsigned int weight, DepGraphNode *from) {
+DepGraphEdge *CreateEdge(unsigned int weight, DepGraphNode *from,
+                         DepType type) {
   if (from == NULL) {
     ERROR("from parameter cannot be null");
     exit(1);
@@ -297,9 +337,7 @@ DepGraphEdge *CreateEdge(unsigned int weight, DepGraphNode *from) {
   edge->weight = weight;
   edge->from = from;
   edge->next = NULL;
-
-  // TODO: anti deps
-  edge->type = TRUE;
+  edge->type = type;
 
   return edge;
 }
