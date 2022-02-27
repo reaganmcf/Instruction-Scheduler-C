@@ -31,5 +31,6 @@ DepGraphNode *CreateNode(Instruction *);
 DepGraphEdge *GetDeps(Instruction *);
 DepGraphEdge *CreateEdge(unsigned int, DepGraphNode *);
 Instruction *GetDepRegisterInstruction(Instruction *, unsigned int);
+Instruction *GetDepMemoryInstruction(Instruction *, unsigned int);
 
 #endif

@@ -37,10 +37,15 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
     exit(1);
   }
 
+  PrintInstruction(stdout,instruction);
+
   DepGraphEdge *edges = NULL;
 
   // TODO: anti deps
-  if (instruction->opcode == ADD) {
+
+  OpCode op = instruction->opcode;
+  /** ADD, MUL, SUB **/
+  if (op == ADD || op == MUL || op == SUB) {
     Instruction *dep1 =
         GetDepRegisterInstruction(instruction, instruction->field1);
     Instruction *dep2 =
@@ -56,10 +61,51 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
 
     edge1->next = edge2;
     edges = edge1;
-  } else if (instruction->opcode == LOADI) {
+
+  /** LOADI **/
+  } else if (op == LOADI) {
     return NULL;
+
+  /** OUTPUTAI **/
+  } else if (op == OUTPUTAI) {
+    Instruction *dep = GetDepMemoryInstruction(instruction, instruction->field2);
+
+    if (dep == NULL) {
+      ERROR("OUTPUTAI cannot have null memory deps!");
+      exit(1);
+    }
+
+    DepGraphEdge *edge1 = CreateEdge(instruction->field1, BuildDepGraph(dep));
+
+    edges = edge1;
+  
+  /** STOREAI **/
+  } else if (op == STOREAI) {
+    Instruction *dep = GetDepRegisterInstruction(instruction, instruction->field1);
+
+    if (dep == NULL) {
+      ERROR("STOREAI cannot have null memory deps!");
+      exit(1);
+    }
+
+    DepGraphEdge *edge1 = CreateEdge(instruction->field1, BuildDepGraph(dep));
+
+    edges = edge1;
+
+  /** LOADAI **/
+  } else if(op == LOADAI) {
+    Instruction *dep = GetDepMemoryInstruction(instruction, instruction->field2);
+
+    if (dep == NULL) {
+      ERROR("LOADAI cannot have null memory deps!");
+      exit(1);
+    }
+
+    DepGraphEdge *edge1 = CreateEdge(instruction->field2, BuildDepGraph(dep));
+
+    edges = edge1;
   } else {
-    ERROR("opcode %d not yet implemented", instruction->opcode);
+    ERROR("opcode %d not yet implemented", op);
     exit(1);
   }
 
@@ -82,8 +128,43 @@ Instruction *GetDepRegisterInstruction(Instruction *instruction,
     if (curr->opcode == LOADI) {
       if (curr->field2 == register_num)
         dep = curr;
-    } else if (curr->opcode == ADD) {
+
+    /** ADD, MUL, LOADAI, SUB **/
+    } else if (curr->opcode == ADD || curr->opcode == MUL || curr->opcode == LOADAI || curr->opcode == SUB) {
       if (curr->field3 == register_num)
+        dep = curr;
+    } else {
+      ERROR("opcode %d not yet implemented", curr->opcode);
+      exit(1);
+    }
+
+    curr = curr->prev;
+  }
+  return dep;
+}
+
+Instruction *GetDepMemoryInstruction(Instruction * instruction, unsigned int memory_location) {
+  Instruction *dep = NULL;
+  if (instruction == NULL) {
+    ERROR("instruction param cannot be NULL");
+  }
+
+  // TODO: anti deps
+  
+  DEBUG("Finding dep memory for %d", memory_location);
+  Instruction *curr = instruction->prev;
+  while(curr != NULL && dep == NULL) {
+    PrintInstruction(stdout, curr);
+    if (curr->opcode != STOREAI && curr->opcode != LOADAI && curr->opcode != OUTPUTAI) {
+      // NOT A MEMORY INSTRUCTION -- SKIP!
+
+    /** STOREAI **/
+    } else if (curr->opcode == STOREAI) {
+      if (curr->field3 == memory_location)
+        dep = curr;
+    /** LOADAI **/
+    } else if (curr->opcode == LOADAI) {
+      if (curr->field2 == memory_location)
         dep = curr;
     } else {
       ERROR("opcode %d not yet implemented", curr->opcode);
