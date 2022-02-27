@@ -7,4 +7,6 @@ void PrintDepGraphNode(DepGraphNode *node, unsigned int level);
 void PrintDepGraph(DepGraph *graph);
 unsigned int InstructionIsInGraph(DepGraph *graph, Instruction *instruction);
 unsigned int InstructionIsInGraphNode(DepGraphNode *node, Instruction *instruction);
+DepGraphEdge* CombineDeps(DepGraphEdge *a, DepGraphEdge *b);
+DepGraphEdge* CombineDepsUnchecked(DepGraphEdge* a, DepGraphEdge *b);
 #endif

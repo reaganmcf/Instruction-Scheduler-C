@@ -21,51 +21,53 @@ void PrintInstruction(FILE *outfile, Instruction *instr) {
   }
   if (instr) {
     switch (instr->opcode) {
+    case LOAD:
+      fprintf(outfile, "(id=%d) load r%d => r%d\n", instr->id, instr->field1,
+              instr->field2);
+      break;
     case LOADI:
-      fprintf(outfile, "(id=%d) loadI %d => r%d\n", instr->id, instr->field1, instr->field2);
+      fprintf(outfile, "(id=%d) loadI %d => r%d\n", instr->id, instr->field1,
+              instr->field2);
       break;
     case LOADAI:
-      fprintf(outfile, "(id=%d) loadAI r%d, %d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+      fprintf(outfile, "(id=%d) loadAI r%d, %d => r%d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
-    case LOADAO:
-      fprintf(outfile, "(id=%d) loadAO r%d, r%d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+    case STORE:
+      fprintf(outfile, "(id=%d) store r%d => r%d\n", instr->id, instr->field1,
+              instr->field2);
       break;
     case STOREAI:
-      fprintf(outfile, "(id=%d) storeAI r%d => r%d, %d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
-      break;
-    case STOREAO:
-      fprintf(outfile, "(id=%d) storeAO r%d => r%d, r%d\n", instr->id, instr->field1,
-              instr->field2, instr->field3);
+      fprintf(outfile, "(id=%d) storeAI r%d => r%d, %d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
     case LSHIFTI:
-      fprintf(outfile, "(id=%d) lshiftI r%d, %d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+      fprintf(outfile, "(id=%d) lshiftI r%d, %d => r%d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
     case RSHIFTI:
-      fprintf(outfile, "(id=%d) rshiftI r%d, %d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+      fprintf(outfile, "(id=%d) rshiftI r%d, %d => r%d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
     case ADD:
-      fprintf(outfile, "(id=%d) add r%d, r%d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+      fprintf(outfile, "(id=%d) add r%d, r%d => r%d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
     case SUB:
-      fprintf(outfile, "(id=%d) sub r%d, r%d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+      fprintf(outfile, "(id=%d) sub r%d, r%d => r%d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
     case MUL:
-      fprintf(outfile, "(id=%d) mult r%d, r%d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+      fprintf(outfile, "(id=%d) mult r%d, r%d => r%d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
     case DIV:
-      fprintf(outfile, "(id=%d) div r%d, r%d => r%d\n", instr->id, instr->field1, instr->field2,
-              instr->field3);
+      fprintf(outfile, "(id=%d) div r%d, r%d => r%d\n", instr->id,
+              instr->field1, instr->field2, instr->field3);
       break;
     case OUTPUTAI:
-      fprintf(outfile, "(id=%d) outputAI r%d, %d\n", instr->id, instr->field1, instr->field2);
+      fprintf(outfile, "(id=%d) outputAI r%d, %d\n", instr->id, instr->field1,
+              instr->field2);
       break;
     default:
       ERROR("Illegal instructions\n");
@@ -105,7 +107,27 @@ Instruction *ReadInstruction(FILE *infile) {
     free(instr);
     return NULL;
   }
-  if (!strcmp(InstrBuffer, "loadI")) {
+  if (!strcmp(InstrBuffer, "load")) {
+    instr->opcode = LOAD;
+    /* get first operand: target register */
+    fscanf(infile, "%s", InstrBuffer);
+    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field1));
+    /* skip over "=>"  */
+    fscanf(infile, "%s", InstrBuffer);
+    /* get third operand: register */
+    fscanf(infile, "%s", InstrBuffer);
+    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field2));
+  } else if (!strcmp(InstrBuffer, "store")) {
+    instr->opcode = STORE;
+    /* get first operand: target register */
+    fscanf(infile, "%s", InstrBuffer);
+    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field1));
+    /* skip over "=>"  */
+    fscanf(infile, "%s", InstrBuffer);
+    /* get third operand: register */
+    fscanf(infile, "%s", InstrBuffer);
+    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field2));
+  } else if (!strcmp(InstrBuffer, "loadI")) {
     instr->opcode = LOADI;
     /* get first operand: immediate constant */
     fscanf(infile, "%s", InstrBuffer);
@@ -128,19 +150,6 @@ Instruction *ReadInstruction(FILE *infile) {
     /* get third operand: target register */
     fscanf(infile, "%s", InstrBuffer);
     sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field3));
-  } else if (!strcmp(InstrBuffer, "loadAO")) {
-    instr->opcode = LOADAO;
-    /* get first operand: base register */
-    fscanf(infile, "%s", InstrBuffer);
-    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field1));
-    /* get second operand: offset register */
-    fscanf(infile, "%s", InstrBuffer);
-    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field2));
-    /* skip over "=>"  */
-    fscanf(infile, "%s", InstrBuffer);
-    /* get third operand: target register */
-    fscanf(infile, "%s", InstrBuffer);
-    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field3));
   } else if (!strcmp(InstrBuffer, "storeAI")) {
     instr->opcode = STOREAI;
     /* get first operand: register */
@@ -154,19 +163,6 @@ Instruction *ReadInstruction(FILE *infile) {
     /* get second operand: immediate constant */
     fscanf(infile, "%s", InstrBuffer);
     sscanf(InstrBuffer, "%d", &(instr->field3));
-  } else if (!strcmp(InstrBuffer, "storeAO")) {
-    instr->opcode = STOREAO;
-    /* get first operand: register */
-    fscanf(infile, "%s", InstrBuffer);
-    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field1));
-    /* skip over "=>"  */
-    fscanf(infile, "%s", InstrBuffer);
-    /* get base register */
-    fscanf(infile, "%s", InstrBuffer);
-    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field2));
-    /* get second operand: immediate constant */
-    fscanf(infile, "%s", InstrBuffer);
-    sscanf(InstrBuffer, "%c%d", &dummy, &(instr->field3));
   } else if (!strcmp(InstrBuffer, "lshiftI")) {
     instr->opcode = LSHIFTI;
     /* get first operand: target register */

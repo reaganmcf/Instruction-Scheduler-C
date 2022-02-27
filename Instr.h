@@ -11,18 +11,18 @@
 #define INSTR_H
 
 typedef enum {
-  LOADI,   // 0
-  LOADAI,  // 1 
-  LOADAO,  // 2
-  STOREAI, // 3
-  STOREAO, // 4
-  ADD,     // 5 
-  SUB,     // 6
-  MUL,     // 7
-  DIV,     // 8
-  LSHIFTI, // 9
-  RSHIFTI, // 10
-  OUTPUTAI // 11
+  LOADI,    // 0
+  LOADAI,   // 1
+  LOAD,     // 2
+  STOREAI,  // 3
+  STORE,    // 4
+  ADD,      // 5
+  SUB,      // 6
+  MUL,      // 7
+  DIV,      // 8
+  LSHIFTI,  // 9
+  RSHIFTI,  // 10
+  OUTPUTAI, // 11
 } OpCode;
 
 typedef struct InstructionInfo Instruction;

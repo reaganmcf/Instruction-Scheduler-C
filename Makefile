@@ -8,7 +8,7 @@
 # */
 
 
-CCFLAGS = -ggdb -Wall -lm
+CCFLAGS = -ggdb -Wall -lm -Werror
 
 
 compile: Scheduler.c InstrUtils.c InstrUtils.h Utils.c Utils.h

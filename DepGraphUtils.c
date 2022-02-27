@@ -99,3 +99,25 @@ unsigned int InstructionIsInGraphNode(DepGraphNode *node, Instruction *instructi
 
   return 0;
 }
+
+DepGraphEdge* CombineDeps(DepGraphEdge* a, DepGraphEdge *b) {
+  DepGraphEdge* combined = NULL;
+  if (a == NULL && b == NULL) {
+    ERROR("a and b are both NULL - this is not possible!");
+    exit(1);
+  } else if (a == NULL) {
+    combined = b;
+  } else if (b == NULL) {
+    combined = a;
+  } else {
+    combined = a;
+    combined->next = b;
+  }
+
+  return combined;
+}
+
+DepGraphEdge* CombineDepsUnchecked(DepGraphEdge* a, DepGraphEdge *b) {
+  if (a == NULL && b == NULL) return NULL;
+  return CombineDeps(a,b);
+}

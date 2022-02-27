@@ -1,0 +1,5 @@
+loadI 1024 => r0
+loadI 1028 => r1
+loadI 17 => r2
+store r2 => r1
+outputAI r0, 4

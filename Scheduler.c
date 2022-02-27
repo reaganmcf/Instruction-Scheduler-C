@@ -50,6 +50,7 @@ int main(int argc, char *argv[])
 	}
 	
 	DepGraph* root = BuildDepGraph(LastInstruction(InstrList));
+  fprintf(stderr, "\n---------RESULT ------------\n");
   PrintDepGraph(root);
 
   //PrintInstructionList(stdout, InstrList);
