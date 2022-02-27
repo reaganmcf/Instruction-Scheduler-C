@@ -1,0 +1,27 @@
+outputAI r0, 28
+   ->(TRUE):storeAI r25 => r0, 28
+         ->(TRUE):loadAI r0, 24 => r25
+               ->(TRUE):storeAI r23 => r0, 24
+                     ->(TRUE):add r21, r22 => r23
+                           ->(TRUE):loadAI r0, 12 => r21
+                                 ->(TRUE):storeAI r11 => r0, 12
+                                       ->(TRUE):sub r9, r10 => r11
+                                             ->(TRUE):loadAI r0, 8 => r9
+                                                   ->(TRUE):storeAI r7 => r0, 8
+                                                         ->(TRUE):add r5, r6 => r7
+                                                               ->(TRUE):loadI 5 => r5
+                                                               ->(TRUE):loadAI r0, 0 => r6
+                                                                     ->(TRUE):storeAI r1 => r0, 0
+                                                                           ->(TRUE):loadI 0 => r1
+                                             ->(TRUE):loadI 9 => r10
+                           ->(TRUE):loadAI r0, 20 => r22
+                                 ->(TRUE):storeAI r19 => r0, 20
+                                       ->(TRUE):mult r17, r18 => r19
+                                             ->(TRUE):loadAI r0, 16 => r17
+                                                   ->(TRUE):storeAI r15 => r0, 16
+                                                         ->(TRUE):mult r13, r14 => r15
+                                                               ->(TRUE):loadAI r0, 4 => r13
+                                                                     ->(TRUE):storeAI r3 => r0, 4
+                                                                           ->(TRUE):loadI 63 => r3
+                                                               ->(TRUE):loadI 3 => r14
+                                             ->(TRUE):loadI 7 => r18

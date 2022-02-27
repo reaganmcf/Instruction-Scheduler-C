@@ -28,6 +28,7 @@ typedef enum {
 typedef struct InstructionInfo Instruction;
 
 struct InstructionInfo {
+  unsigned int id;
   OpCode opcode;
   int field1;
   int field2;

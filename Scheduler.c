@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
 	  exit(EXIT_FAILURE);
 	}
 	
-	DepGraphNode* root = BuildDepGraph(LastInstruction(InstrList));
-  PrintDepGraphNode(root, 0);
+	DepGraph* root = BuildDepGraph(LastInstruction(InstrList));
+  PrintDepGraph(root);
 
   //PrintInstructionList(stdout, InstrList);
 

@@ -6,9 +6,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned int id;
+DepGraph *BuildDepGraph(Instruction *instruction) {
+  DepGraph *graph = calloc(1, sizeof(DepGraph));
+  graph->nodes = calloc(50, sizeof(DepGraphNode *));
+  graph->count = 0;
 
-DepGraphNode *BuildDepGraph(Instruction *instruction) {
+  Instruction *curr = instruction;
+  while (curr != NULL) {
+    if (!InstructionIsInGraph(graph, curr)) {
+      graph->nodes[graph->count++] = BuildDepGraphNode(curr);
+    }
+
+    curr = curr->prev;
+  }
+
+  return graph;
+}
+
+DepGraphNode *BuildDepGraphNode(Instruction *instruction) {
   DepGraphEdge *edges = GetDeps(instruction);
   DepGraphNode *root = CreateNode(instruction);
   root->edges = edges;
@@ -24,7 +39,6 @@ DepGraphNode *CreateNode(Instruction *instruction) {
 
   DepGraphNode *node = calloc(1, sizeof(DepGraphNode));
 
-  node->id = id++;
   node->instruction = instruction;
   node->edges = NULL;
 
@@ -37,7 +51,7 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
     exit(1);
   }
 
-  PrintInstruction(stdout, instruction);
+  //PrintInstruction(stdout, instruction);
 
   DepGraphEdge *edges = NULL;
 
@@ -56,8 +70,10 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
       exit(1);
     }
 
-    DepGraphEdge *edge1 = CreateEdge(instruction->field1, BuildDepGraph(dep1));
-    DepGraphEdge *edge2 = CreateEdge(instruction->field2, BuildDepGraph(dep2));
+    DepGraphEdge *edge1 =
+        CreateEdge(instruction->field1, BuildDepGraphNode(dep1));
+    DepGraphEdge *edge2 =
+        CreateEdge(instruction->field2, BuildDepGraphNode(dep2));
 
     edge1->next = edge2;
     edges = edge1;
@@ -76,7 +92,8 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
       exit(1);
     }
 
-    DepGraphEdge *edge1 = CreateEdge(instruction->field1, BuildDepGraph(dep));
+    DepGraphEdge *edge1 =
+        CreateEdge(instruction->field1, BuildDepGraphNode(dep));
 
     edges = edge1;
 
@@ -90,7 +107,8 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
       exit(1);
     }
 
-    DepGraphEdge *edge1 = CreateEdge(instruction->field1, BuildDepGraph(dep));
+    DepGraphEdge *edge1 =
+        CreateEdge(instruction->field1, BuildDepGraphNode(dep));
 
     edges = edge1;
 
@@ -104,7 +122,8 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
       exit(1);
     }
 
-    DepGraphEdge *edge1 = CreateEdge(instruction->field2, BuildDepGraph(dep));
+    DepGraphEdge *edge1 =
+        CreateEdge(instruction->field2, BuildDepGraphNode(dep));
 
     edges = edge1;
   } else {
@@ -156,10 +175,10 @@ Instruction *GetDepMemoryInstruction(Instruction *instruction,
 
   // TODO: anti deps
 
-  DEBUG("Finding dep memory for %d", memory_location);
+  //DEBUG("Finding dep memory for %d", memory_location);
   Instruction *curr = instruction->prev;
   while (curr != NULL && dep == NULL) {
-    PrintInstruction(stdout, curr);
+    //PrintInstruction(stdout, curr);
     if (curr->opcode != STOREAI && curr->opcode != LOADAI &&
         curr->opcode != OUTPUTAI) {
       // NOT A MEMORY INSTRUCTION -- SKIP!
