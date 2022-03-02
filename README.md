@@ -2,6 +2,18 @@ The directory "benchmarks" contains the iloc benchmark programs that you need to
 
 The directory "C" contains a basic infrastructure for reading in and printing out ILOC instructions. You are not required to use this code.
 
+
+### Todo
+
+- [x] Register dependencies
+- [x] Memory dependencies
+- [ ] Register Anti Dependencies (NEED LOAD AND STORE)
+- [ ] Memory Anti Dependencies (NEED ALL)
+- [ ] Heap algorithm for active / ready set
+- [ ] Longest latency weighted path heuristic scheduler
+- [ ] Highest latency instruction heuristic scheduler
+- [ ] My own heuristic (unknown)
+
 ## Development
 
 ```console
