@@ -109,6 +109,8 @@ DepGraphEdge* CombineDeps(DepGraphEdge* a, DepGraphEdge *b) {
     combined = b;
   } else if (b == NULL) {
     combined = a;
+  } else if (a->from->instruction->id == b->from->instruction->id) {
+    combined = a;
   } else {
     combined = a;
     combined->next = b;

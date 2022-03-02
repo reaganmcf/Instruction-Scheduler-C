@@ -60,13 +60,14 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
   // TODO: anti deps
 
   OpCode op = instruction->opcode;
-  /** ADD, MUL, SUB **/
-  if (op == ADD || op == MUL || op == SUB) {
+  /** ADD, MUL, SUB, DIV **/
+  if (op == ADD || op == MUL || op == SUB || op == DIV) {
     Instruction *dep1 = GetRegisterDep(instruction, instruction->field1);
     Instruction *dep2 = GetRegisterDep(instruction, instruction->field2);
+    Instruction *antiDep = GetRegisterAntiDep(instruction, instruction->field3);
 
     if (dep1 == NULL || dep2 == NULL) {
-      ERROR("ADD,SUB,MUL cannot have null register deps!");
+      ERROR("ADD,SUB,MUL,DIV cannot have null register deps!");
       exit(1);
     }
 
@@ -75,10 +76,18 @@ DepGraphEdge *GetDeps(Instruction *instruction) {
 
     if (dep1->id == dep2->id) {
       // same dep only gets added once not twice
-      edges = edge1;
+      if (antiDep == NULL) {
+        edges = edge1;
+      } else {
+        edges =
+            CombineDeps(edge1, CreateEdge(0, BuildDepGraphNode(antiDep), ANTI));
+      }
     } else {
-      edge1->next = edge2;
-      edges = edge1;
+      edges = CombineDeps(edge1, edge2);
+      if (antiDep != NULL) {
+        edges =
+            CombineDeps(edges, CreateEdge(0, BuildDepGraphNode(antiDep), ANTI));
+      }
     }
 
     /** LOADI **/
@@ -181,9 +190,10 @@ Instruction *GetRegisterDep(Instruction *instruction,
       if (curr->field2 == register_num)
         dep = curr;
 
-      /** ADD, MUL, LOADAI, SUB **/
+      /** ADD, MUL, LOADAI, SUB, DIV **/
     } else if (curr->opcode == ADD || curr->opcode == MUL ||
-               curr->opcode == LOADAI || curr->opcode == SUB) {
+               curr->opcode == LOADAI || curr->opcode == SUB ||
+               curr->opcode == DIV) {
       if (curr->field3 == register_num)
         dep = curr;
 
